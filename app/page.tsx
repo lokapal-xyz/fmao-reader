@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { BookOpen, CheckCircle, Circle, Loader2, X, Globe, Terminal, Lock, Unlock } from 'lucide-react';
+import { CheckCircle, X, Globe, Terminal, Lock, Unlock } from 'lucide-react';
 
 // Configuration
 const API_BASE_URL = 'http://localhost:3000/api';
@@ -215,7 +215,7 @@ export default function FMAOReader() {
         {!selectedChapter ? (
           <>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {chapters.map((chapter, idx) => {
+              {chapters.map((chapter, ) => {
                 const isRead = readChapters.has(`${language}-${chapter.id}`);
                 return (
                   <button
