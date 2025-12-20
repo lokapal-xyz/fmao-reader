@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { CheckCircle, X, Globe, Terminal, Lock, Unlock } from 'lucide-react';
 
 // Configuration
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = 'https://www.lokapal.xyz/api';
 const BOOK_ID = 'book-0';
 
 // Types
