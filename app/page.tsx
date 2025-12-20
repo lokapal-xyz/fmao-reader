@@ -2,6 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { CheckCircle, X, Globe, Terminal, Lock, Unlock } from 'lucide-react';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  other: {
+    'base:app_id': '694701f9d19763ca26ddc747'
+  }
+};
 
 // Configuration
 const API_BASE_URL = 'https://www.lokapal.xyz/api';
