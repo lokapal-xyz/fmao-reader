@@ -2,16 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import { CheckCircle, X, Globe, Terminal, Lock, Unlock, BookOpen, ChevronRight, Database } from 'lucide-react';
-import { useAccount, useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
+import { useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
 import { encodeFunctionData, parseEther } from 'viem';
 import { base } from 'viem/chains';
+import Image from 'next/image';
 
 // Configuration
 const API_BASE_URL = 'https://www.lokapal.xyz/api';
 const GRAPHQL_ENDPOINT = 'https://api.studio.thegraph.com/query/121796/plexus-archive-sepolia/v0.0.1';
 
 // Contract addresses on Base Mainnet
-const BOOK_TOKEN_CONTRACT = '0x4FEb9Fbc359400d477761cD67d80cF0ce43dd84F'; // TODO: Update with deployed mainnet address
+const BOOK_TOKEN_CONTRACT = '0xYourMainnetContractAddress'; // TODO: Update with deployed mainnet address
 const BOOK_PRICE_ETH = '0.002'; // 0.002 ETH per book
 
 // IPFS Configuration
@@ -102,7 +103,6 @@ export default function FMAOReader() {
   const [mintedBooks, setMintedBooks] = useState<Set<string>>(new Set());
 
   // Wagmi hooks
-  const { address, isConnected } = useAccount();
   const { data: hash, sendTransaction, isPending } = useSendTransaction();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
@@ -1294,16 +1294,15 @@ export default function FMAOReader() {
                 borderRadius: '8px',
                 overflow: 'hidden',
                 border: '2px solid rgba(34, 211, 238, 0.3)',
-                background: '#000'
+                background: '#000',
+                position: 'relative'
               }}>
-                <img 
+                <Image 
                   src={getBookImageUrl(selectedBook)}
                   alt={`${selectedBook} token`}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover'
-                  }}
+                  fill
+                  style={{ objectFit: 'cover' }}
+                  unoptimized
                 />
               </div>
 
