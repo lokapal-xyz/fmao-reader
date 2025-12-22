@@ -116,7 +116,6 @@ export default function FMAOReader() {
   const [plexusLoading, setPlexusLoading] = useState(false);
   const [showMintDialog, setShowMintDialog] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
-  const [mintedBooks, setMintedBooks] = useState<Set<string>>(new Set());
   const { address } = useAccount();
   const [mintingBookId, setMintingBookId] = useState<string | null>(null);
   const [lastMintedBookId, setLastMintedBookId] = useState<string | null>(null);
@@ -128,7 +127,6 @@ export default function FMAOReader() {
   useEffect(() => {
     fetchBooks();
     loadReadProgress();
-    loadMintedBooks();
   }, [language]);
 
   const fetchBooks = async () => {
@@ -214,30 +212,6 @@ export default function FMAOReader() {
     } catch (err) {
       console.error('Failed to load progress:', err);
     }
-  };
-
-  const loadMintedBooks = () => {
-    try {
-      const saved = localStorage.getItem('fmao_minted_books');
-      if (saved) {
-        setMintedBooks(new Set(JSON.parse(saved)));
-      }
-    } catch (err) {
-      console.error('Failed to load minted books:', err);
-    }
-  };
-
-  const saveMintedBook = (bookId: string) => {
-    setMintedBooks(prev => {
-      const updated = new Set(prev);
-      updated.add(bookId);
-      try {
-        localStorage.setItem('fmao_minted_books', JSON.stringify(Array.from(updated)));
-      } catch (err) {
-        console.error('Failed to save minted book:', err);
-      }
-      return updated;
-    });
   };
 
   const markAsRead = (chapterId: string) => {
@@ -371,7 +345,7 @@ const { data: balance, refetch: refetchBalance, isLoading: isBalanceLoading } = 
     // We check for mintingBookId to ensure this effect ONLY fires once per transaction
     if (isSuccess && hash && mintingBookId) {
       refetchBalance(); // Update on-chain truth
-      saveMintedBook(mintingBookId); // Update local cache
+      // saveMintedBook(mintingBookId); // Update local cache
       
       setLastMintedBookId(mintingBookId); // Lock the ID for the Success Dialog
       setShowMintDialog(false);
@@ -651,7 +625,8 @@ const { data: balance, refetch: refetchBalance, isLoading: isBalanceLoading } = 
                 RETURN<br />TO_ARCHIVE
               </button>
 
-              {selectedBook && !mintedBooks.has(selectedBook) && (
+              {/* 1. Only show the Mint button if the chain says they DON'T own it */}
+              {selectedBook && !isActuallyOwned && !isBalanceLoading && (
                 <button
                   onClick={() => setShowMintDialog(true)}
                   style={{
@@ -682,6 +657,7 @@ const { data: balance, refetch: refetchBalance, isLoading: isBalanceLoading } = 
                 </button>
               )}
 
+              {/* 2. OWNED BADGE: Only show if the blockchain confirms ownership */}
               {selectedBook && isActuallyOwned && !isBalanceLoading && (
                 <div style={{
                   padding: '12px 24px',
