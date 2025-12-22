@@ -195,6 +195,10 @@ export default function FMAOReader() {
       const data = await response.json();
       setSelectedChapter(data);
       setViewMode('content');
+
+      // ADD THIS LINE HERE
+      window.scrollTo(0, 0);
+
       markAsRead(`${language}-${selectedBook}-${chapterId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load content');
@@ -230,6 +234,7 @@ export default function FMAOReader() {
   const resetProgress = () => {
     setReadChapters(new Set());
     localStorage.removeItem('fmao_read_chapters');
+    window.scrollTo({ top: 0, behavior: 'smooth' }); // Reset scroll position
   };
 
   const toggleLanguage = () => {
@@ -243,11 +248,13 @@ export default function FMAOReader() {
     setViewMode('books');
     setSelectedChapter(null);
     setSelectedBook(null);
+    window.scrollTo(0, 0); // Reset scroll position
   };
 
   const goToChapters = () => {
     setViewMode('chapters');
     setSelectedChapter(null);
+    window.scrollTo(0, 0); // Reset scroll position
   };
 
   const fetchPlexusEntry = async (title: string) => {
