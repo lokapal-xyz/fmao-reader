@@ -12,7 +12,7 @@ const API_BASE_URL = 'https://www.lokapal.xyz/api';
 const GRAPHQL_ENDPOINT = 'https://api.studio.thegraph.com/query/121796/plexus-archive-sepolia/v0.0.1';
 
 // Contract addresses on Base Mainnet
-const BOOK_TOKEN_CONTRACT = '0xYourMainnetContractAddress'; // TODO: Update with deployed mainnet address
+const BOOK_TOKEN_CONTRACT = '0x4FEb9Fbc359400d477761cD67d80cF0ce43dd84F'; // TODO: Update with deployed mainnet address
 const BOOK_PRICE_ETH = '0.002'; // 0.002 ETH per book
 
 // IPFS Configuration
@@ -432,7 +432,8 @@ export default function FMAOReader() {
       }}>
         <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '20px 24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
+            <div style={{ flex: 1 }}>
+              {/* Title Row */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
                 <Terminal style={{ width: '24px', height: '24px', color: '#22d3ee' }} />
                 <h1 
@@ -444,53 +445,47 @@ export default function FMAOReader() {
                     WebkitBackgroundClip: 'text', 
                     WebkitTextFillColor: 'transparent', 
                     margin: 0,
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap'
                   }}
                   onClick={goToBooks}
                 >
                   FROM MANY AS ONE
                 </h1>
-                {selectedBook && (
-                  <span style={{ fontSize: '12px', fontFamily: 'monospace', color: '#64748b', padding: '4px 8px', border: '1px solid #334155', borderRadius: '4px' }}>
-                    {selectedBook.toUpperCase()}
+              </div>
+              
+              {/* Metadata and Language Row */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '12px', fontFamily: 'monospace' }}>
+                {viewMode === 'chapters' && (
+                  <span style={{ color: 'rgba(34, 211, 238, 0.7)' }}>
+                    CHAPTERS_READ: <span style={{ color: '#4ade80' }}>{currentBookReadCount}/{chapters.length}</span>
                   </span>
                 )}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '12px', fontFamily: 'monospace' }}>
-                <span style={{ color: 'rgba(34, 211, 238, 0.7)' }}>
-                  STATUS: <span style={{ color: '#4ade80' }}>ONLINE</span>
-                </span>
-                {viewMode === 'chapters' && (
-                  <>
-                    <span style={{ color: '#475569' }}>|</span>
-                    <span style={{ color: '#94a3b8' }}>
-                      SHARDS_ACCESSED: {currentBookReadCount}/{chapters.length}
-                    </span>
-                  </>
-                )}
+                
+                {/* Separator and Language Toggle
+                <span style={{ color: '#475569' }}>|</span> */}
+                <button
+                  onClick={toggleLanguage}
+                  style={{
+                    padding: '8px 16px',
+                    background: '#0f172a',
+                    border: '1px solid rgba(34, 211, 238, 0.3)',
+                    borderRadius: '4px',
+                    fontFamily: 'monospace',
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <Globe style={{ width: '16px', height: '16px', color: '#22d3ee' }} />
+                  <span style={{ color: '#67e8f9', fontWeight: 'bold' }}>
+                    {language.toUpperCase()}
+                  </span>
+                </button>
               </div>
             </div>
-            
-            <button
-              onClick={toggleLanguage}
-              style={{
-                padding: '8px 16px',
-                background: '#0f172a',
-                border: '1px solid rgba(34, 211, 238, 0.3)',
-                borderRadius: '4px',
-                fontFamily: 'monospace',
-                fontSize: '14px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
-            >
-              <Globe style={{ width: '16px', height: '16px', color: '#22d3ee' }} />
-              <span style={{ color: '#67e8f9', fontWeight: 'bold' }}>
-                {language.toUpperCase()}
-              </span>
-            </button>
           </div>
         </div>
       </div>
@@ -513,85 +508,78 @@ export default function FMAOReader() {
                 ARCHIVE_INDEX
               </h2>
               <p style={{ color: '#94a3b8', fontSize: '14px', fontFamily: 'monospace' }}>
-                SELECT A VOLUME TO ACCESS ITS SHARDS
+                SELECT A VOLUME TO ACCESS ITS CHAPTERS
               </p>
             </div>
 
             <div style={{ display: 'grid', gap: '24px', maxWidth: '800px', margin: '0 auto' }}>
               {books.map((book) => (
-                <button
-                  key={book.id}
-                  onClick={() => fetchChapters(book.id)}
-                  style={{
-                    width: '100%',
-                    textAlign: 'left',
-                    padding: '32px',
-                    borderRadius: '12px',
-                    background: 'rgba(2, 6, 23, 0.5)',
-                    border: '2px solid rgba(34, 211, 238, 0.2)',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s',
-                    position: 'relative',
-                    overflow: 'hidden'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(34, 211, 238, 0.6)';
-                    e.currentTarget.style.transform = 'translateY(-4px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(34, 211, 238, 0.2)';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                  }}
-                >
-                  <div style={{
+              <button
+                key={book.id}
+                onClick={() => fetchChapters(book.id)}
+                style={{
+                  width: '100%',
+                  textAlign: 'left',
+                  padding: '24px', // Slightly reduced padding for mobile
+                  borderRadius: '12px',
+                  background: 'rgba(2, 6, 23, 0.7)',
+                  border: '1px solid rgba(34, 211, 238, 0.2)',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  minHeight: '120px', // Ensures consistent height
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(34, 211, 238, 0.6)';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'rgba(34, 211, 238, 0.2)';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+              >
+                {/* Background Watermark Icon */}
+                <BookOpen 
+                  style={{ 
                     position: 'absolute',
-                    top: 0,
-                    right: 0,
-                    width: '200px',
-                    height: '200px',
-                    background: 'rgba(34, 211, 238, 0.05)',
-                    filter: 'blur(64px)',
+                    right: '-10px',
+                    bottom: '-10px',
+                    width: '100px',
+                    height: '100px',
+                    color: 'rgba(34, 211, 238, 0.07)', // Very subtle cyan
+                    transform: 'rotate(-15deg)',
                     pointerEvents: 'none'
-                  }} />
-                  
-                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '24px' }}>
-                    <div style={{
-                      width: '80px',
-                      height: '80px',
-                      background: 'linear-gradient(135deg, rgba(34, 211, 238, 0.2), rgba(96, 165, 250, 0.2))',
-                      border: '2px solid rgba(34, 211, 238, 0.3)',
-                      borderRadius: '12px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0
+                  }} 
+                />
+                
+                <div style={{ position: 'relative', zIndex: 1, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+                  <div style={{ flex: 1 }}>
+                    <h3 style={{
+                      fontFamily: 'monospace',
+                      fontSize: '20px', // Scaled down slightly for mobile
+                      fontWeight: 'bold',
+                      color: '#f1f5f9',
+                      marginBottom: '4px'
                     }}>
-                      <BookOpen style={{ width: '40px', height: '40px', color: '#22d3ee' }} />
-                    </div>
-                    
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <h3 style={{
-                        fontFamily: 'monospace',
-                        fontSize: '24px',
-                        fontWeight: 'bold',
-                        color: '#f1f5f9',
-                        marginBottom: '8px'
-                      }}>
-                        {book.title[language]}
-                      </h3>
-                      <p style={{
-                        fontSize: '14px',
-                        color: '#94a3b8',
-                        lineHeight: 1.6,
-                        margin: 0
-                      }}>
-                        {book.description[language]}
-                      </p>
-                    </div>
-                    
-                    <ChevronRight style={{ width: '32px', height: '32px', color: 'rgba(34, 211, 238, 0.5)', flexShrink: 0 }} />
+                      {book.title[language]}
+                    </h3>
+                    <p style={{
+                      fontSize: '13px',
+                      color: '#94a3b8',
+                      lineHeight: 1.4,
+                      margin: 0,
+                      maxWidth: '90%' // Keeps text from hitting the edge
+                    }}>
+                      {book.description[language]}
+                    </p>
                   </div>
-                </button>
+                  
+                  <ChevronRight style={{ width: '20px', height: '20px', color: 'rgba(34, 211, 238, 0.5)', flexShrink: 0 }} />
+                </div>
+              </button>
               ))}
             </div>
           </div>
@@ -607,19 +595,19 @@ export default function FMAOReader() {
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
-                  color: '#94a3b8',
+                  color: '#22d3ee', // Brighter cyan
                   fontFamily: 'monospace',
-                  fontSize: '14px',
-                  background: 'none',
+                  fontSize: '12px',
+                  background: 'rgba(34, 211, 238, 0.05)',
                   border: 'none',
+                  borderLeft: '2px solid #22d3ee',
+                  padding: '6px 12px',
                   cursor: 'pointer',
-                  padding: 0
+                  borderRadius: '0 4px 4px 0'
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.color = '#22d3ee'}
-                onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}
               >
-                <X style={{ width: '16px', height: '16px' }} />
-                RETURN_TO_ARCHIVE
+                <X style={{ width: '14px', height: '14px' }} />
+                RETURN<br />TO_ARCHIVE
               </button>
 
               {selectedBook && !mintedBooks.has(selectedBook) && (
@@ -649,8 +637,7 @@ export default function FMAOReader() {
                     e.currentTarget.style.transform = 'translateY(0)';
                   }}
                 >
-                  <BookOpen style={{ width: '16px', height: '16px' }} />
-                  MINT_BOOK_TOKEN (0.002 ETH)
+                  MINT<br />BOOK_TOKEN<br />(0.002 ETH)
                 </button>
               )}
 
@@ -756,23 +743,20 @@ export default function FMAOReader() {
                   onClick={resetProgress}
                   style={{
                     padding: '8px 16px',
-                    fontSize: '12px',
+                    fontSize: '11px',
                     fontFamily: 'monospace',
-                    color: '#64748b',
-                    border: '1px solid #1e293b',
-                    borderRadius: '4px',
-                    background: 'transparent',
-                    cursor: 'pointer'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = '#ef4444';
-                    e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.3)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = '#64748b';
-                    e.currentTarget.style.borderColor = '#1e293b';
+                    color: '#f87171', // Red
+                    background: 'rgba(239, 68, 68, 0.05)',
+                    border: 'none',
+                    borderLeft: '2px solid #ef4444',
+                    borderRadius: '0 4px 4px 0',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
                   }}
                 >
+                  <Terminal style={{ width: '12px', height: '12px' }} />
                   PURGE_ACCESS_LOGS
                 </button>
               </div>
@@ -796,18 +780,18 @@ export default function FMAOReader() {
                     display: 'flex',
                     alignItems: 'center',
                     gap: '8px',
-                    color: '#94a3b8',
+                    color: '#22d3ee',
                     fontFamily: 'monospace',
-                    fontSize: '14px',
-                    background: 'none',
+                    fontSize: '12px',
+                    background: 'rgba(34, 211, 238, 0.05)',
                     border: 'none',
+                    borderLeft: '2px solid #22d3ee',
+                    padding: '6px 12px',
                     cursor: 'pointer',
-                    padding: 0
+                    borderRadius: '0 4px 4px 0'
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.color = '#22d3ee'}
-                  onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}
                 >
-                  <X style={{ width: '16px', height: '16px' }} />
+                  <X style={{ width: '14px', height: '14px' }} />
                   RETURN_TO_INDEX
                 </button>
 
@@ -849,23 +833,6 @@ export default function FMAOReader() {
                           </p>
                         )}
                       </div>
-                      <span style={{
-                        fontSize: '12px',
-                        fontFamily: 'monospace',
-                        padding: '4px 12px',
-                        background: 'rgba(34, 211, 238, 0.1)',
-                        color: '#22d3ee',
-                        border: '1px solid rgba(34, 211, 238, 0.3)',
-                        borderRadius: '20px',
-                        flexShrink: 0
-                      }}>
-                        {selectedChapter.lang.toUpperCase()}
-                      </span>
-                    </div>
-                    
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', fontFamily: 'monospace', color: '#475569' }}>
-                      <Terminal style={{ width: '12px', height: '12px' }} />
-                      <span>CLASSIFICATION: PUBLIC_ARCHIVE</span>
                     </div>
                   </div>
                 </div>
@@ -964,7 +931,7 @@ export default function FMAOReader() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <CheckCircle style={{ width: '20px', height: '20px', color: '#4ade80' }} />
                     <span style={{ fontSize: '14px', fontFamily: 'monospace', color: '#4ade80' }}>
-                      SHARD_ARCHIVED
+                      CHAPTER_ARCHIVED
                     </span>
                   </div>
                 </div>
