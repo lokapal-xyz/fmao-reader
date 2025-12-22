@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { CheckCircle, X, Globe, Terminal, Lock, Unlock, BookOpen, ChevronRight, Database } from 'lucide-react';
-import { useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
+import { useAccount, useReadContract, useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
 import { encodeFunctionData, parseEther } from 'viem';
 import { base } from 'viem/chains';
 import Image from 'next/image';
@@ -20,16 +20,32 @@ const IPFS_GATEWAY = 'https://ipfs.io/ipfs/';
 const BOOK_IMAGES_CID = 'bafybeiaouhewkf6j7qcfmjofrwc74gp23hni7pqvxbccnppnz5igbxb6tq';
 
 // Contract ABI for mintBook function
-const MINT_BOOK_ABI = [{
-  name: 'mintBook',
-  type: 'function',
-  stateMutability: 'payable',
-  inputs: [
-    { name: 'bookId', type: 'uint256' },
-    { name: 'amount', type: 'uint256' }
-  ],
-  outputs: []
-}] as const;
+const MINT_BOOK_ABI = [
+  {
+    name: 'mintBook',
+    type: 'function',
+    stateMutability: 'payable',
+    inputs: [
+      { name: 'bookId', type: 'uint256' },
+      { name: 'amount', type: 'uint256' }
+    ],
+    outputs: []
+  }
+] as const;
+
+// Add balanceOf to your ABI constants
+const BOOK_TOKEN_ABI = [
+  {
+    name: 'balanceOf',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [
+      { name: 'account', type: 'address' },
+      { name: 'id', type: 'uint256' }
+    ],
+    outputs: [{ name: '', type: 'uint256' }]
+  }
+] as const;
 
 // Types
 interface BookDefinition {
@@ -101,6 +117,9 @@ export default function FMAOReader() {
   const [showMintDialog, setShowMintDialog] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [mintedBooks, setMintedBooks] = useState<Set<string>>(new Set());
+  const { address } = useAccount();
+  const [mintingBookId, setMintingBookId] = useState<string | null>(null);
+  const [lastMintedBookId, setLastMintedBookId] = useState<string | null>(null);
 
   // Wagmi hooks
   const { data: hash, sendTransaction, isPending } = useSendTransaction();
@@ -111,15 +130,6 @@ export default function FMAOReader() {
     loadReadProgress();
     loadMintedBooks();
   }, [language]);
-
-  // Handle successful mint
-  useEffect(() => {
-    if (isSuccess && selectedBook) {
-      saveMintedBook(selectedBook);
-      setShowMintDialog(false);
-      setShowSuccessDialog(true);
-    }
-  }, [isSuccess, selectedBook]);
 
   const fetchBooks = async () => {
     try {
@@ -343,21 +353,51 @@ export default function FMAOReader() {
     return parseInt(bookId.replace('book-', ''));
   };
 
+  // Hook to check if the user owns the currently selected book
+const { data: balance, refetch: refetchBalance, isLoading: isBalanceLoading } = useReadContract({
+    address: BOOK_TOKEN_CONTRACT as `0x${string}`,
+    abi: BOOK_TOKEN_ABI,
+    functionName: 'balanceOf',
+    args: address && selectedBook ? [address, BigInt(getBookIdNumber(selectedBook))] : undefined,
+    query: {
+      enabled: !!address && !!selectedBook,
+    }
+  });
+
+  const isActuallyOwned = balance ? Number(balance) > 0 : false;
+
+  // Handle successful mint. Updated Success Effect
+  useEffect(() => {
+    // We check for mintingBookId to ensure this effect ONLY fires once per transaction
+    if (isSuccess && hash && mintingBookId) {
+      refetchBalance(); // Update on-chain truth
+      saveMintedBook(mintingBookId); // Update local cache
+      
+      setLastMintedBookId(mintingBookId); // Lock the ID for the Success Dialog
+      setShowMintDialog(false);
+      setShowSuccessDialog(true);
+      
+      // IMPORTANT: Reset mintingBookId here. 
+      // This "disarms" the effect so it won't fire again even if isSuccess remains true.
+      setMintingBookId(null); 
+    }
+  }, [isSuccess, hash, mintingBookId, refetchBalance]);
+
   const mintBookToken = async () => {
     if (!selectedBook) return;
 
     try {
-      // Get book ID number (book-0 -> 0, book-1 -> 1)
       const bookIdNumber = getBookIdNumber(selectedBook);
+      
+      // Set this BEFORE sending the transaction
+      setMintingBookId(selectedBook); 
 
-      // Encode the mintBook function call
       const data = encodeFunctionData({
         abi: MINT_BOOK_ABI,
         functionName: 'mintBook',
-        args: [BigInt(bookIdNumber), BigInt(1)] // mint 1 token
+        args: [BigInt(bookIdNumber), BigInt(1)]
       });
 
-      // Send transaction
       sendTransaction({
         to: BOOK_TOKEN_CONTRACT as `0x${string}`,
         data,
@@ -367,6 +407,7 @@ export default function FMAOReader() {
 
     } catch (err) {
       console.error('Minting failed:', err);
+      setMintingBookId(null); // Reset on immediate failure
       alert('Minting failed. Please try again.');
     }
   };
@@ -641,7 +682,7 @@ export default function FMAOReader() {
                 </button>
               )}
 
-              {selectedBook && mintedBooks.has(selectedBook) && (
+              {selectedBook && isActuallyOwned && !isBalanceLoading && (
                 <div style={{
                   padding: '12px 24px',
                   background: 'rgba(74, 222, 128, 0.1)',
@@ -1208,9 +1249,10 @@ export default function FMAOReader() {
               background: '#0a1628',
               border: '2px solid rgba(34, 211, 238, 0.3)',
               borderRadius: '12px',
-              maxWidth: '500px',
+              maxWidth: '840px',
               width: '100%',
-              position: 'relative'
+              position: 'relative',
+              margin: '0 auto'
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -1256,8 +1298,7 @@ export default function FMAOReader() {
               {/* Book Token Image */}
               <div style={{
                 width: '100%',
-                height: '300px',
-                marginBottom: '24px',
+                aspectRatio: '4 / 3', // Maintains the 800x600 proportion                marginBottom: '24px',
                 borderRadius: '8px',
                 overflow: 'hidden',
                 border: '2px solid rgba(34, 211, 238, 0.3)',
@@ -1268,7 +1309,7 @@ export default function FMAOReader() {
                   src={getBookImageUrl(selectedBook)}
                   alt={`${selectedBook} token`}
                   fill
-                  style={{ objectFit: 'cover' }}
+                  style={{ objectFit: 'contain' }}
                   unoptimized
                 />
               </div>
@@ -1327,7 +1368,7 @@ export default function FMAOReader() {
       )}
 
       {/* Success Dialog */}
-      {showSuccessDialog && selectedBook && (
+      {showSuccessDialog && lastMintedBookId && (
         <div 
           style={{
             position: 'fixed',
@@ -1363,7 +1404,7 @@ export default function FMAOReader() {
               color: '#4ade80',
               marginBottom: '16px'
             }}>
-              Success!
+              SUCCESS_CONFIRMED
             </h3>
             
             <p style={{
@@ -1373,7 +1414,7 @@ export default function FMAOReader() {
               marginBottom: '24px',
               fontFamily: 'system-ui, -apple-system, sans-serif'
             }}>
-              Now you own {selectedBook.replace('book-', 'Book ')}. Thank you for your support!
+              You now own {lastMintedBookId.replace('book-', 'Book ')}.<br/>Thank you for your support!
             </p>
 
             <button
@@ -1397,7 +1438,7 @@ export default function FMAOReader() {
                 e.currentTarget.style.background = 'rgba(74, 222, 128, 0.2)';
               }}
             >
-              CONTINUE READING
+              CONTINUE_READING
             </button>
           </div>
         </div>
