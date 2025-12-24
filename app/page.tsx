@@ -584,32 +584,48 @@ export default function FMAOReader() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#000', color: '#f1f5f9', position: 'relative' }}>
-      {/* Grid background */}
+    <div style={{ minHeight: '100vh', background: '#020617', color: '#f1f5f9', position: 'relative' }}>
+      {/* 1. Digital Grid (Slightly tighter and more visible) */}
       <div style={{
         position: 'fixed',
         inset: 0,
-        backgroundImage: 'linear-gradient(rgba(0,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,255,0.03) 1px, transparent 1px)',
-        backgroundSize: '50px 50px',
-        pointerEvents: 'none'
+        backgroundImage: `
+          linear-gradient(rgba(34, 211, 238, 0.05) 1px, transparent 1px), 
+          linear-gradient(90deg, rgba(34, 211, 238, 0.05) 1px, transparent 1px)
+        `,
+        backgroundSize: '30px 30px',
+        pointerEvents: 'none',
+        zIndex: 0
       }} />
       
-      {/* Vignette */}
+      {/* 2. CRT Scanlines (The "Flavor" addition) */}
       <div style={{
         position: 'fixed',
         inset: 0,
-        background: 'radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.8) 100%)',
-        pointerEvents: 'none'
+        background: 'linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%)',
+        backgroundSize: '100% 4px',
+        pointerEvents: 'none',
+        zIndex: 1,
+        opacity: 0.3
       }} />
 
-      {/* Header */}
+      {/* 3. Deep Vignette (Creates depth) */}
+      <div style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'radial-gradient(circle at center, transparent 60%, rgba(2, 6, 23, 0.4) 100%)',
+        pointerEvents: 'none',
+        zIndex: 2
+      }} />
+
+      {/* Header (Note: z-index must be higher than background layers) */}
       <div style={{
         position: 'sticky',
         top: 0,
         zIndex: 20,
         borderBottom: '1px solid rgba(34, 211, 238, 0.2)',
-        background: 'rgba(0, 0, 0, 0.8)',
-        backdropFilter: 'blur(20px)'
+        background: 'rgba(2, 6, 23, 0.85)',
+        backdropFilter: 'blur(12px)'
       }}>
         <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '20px 24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
