@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { CheckCircle, X, Globe, Terminal, Lock, Unlock, BookOpen, ChevronRight, Database } from 'lucide-react';
 import { useAccount, useReadContract, useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
 import { encodeFunctionData, parseEther } from 'viem';
@@ -12,7 +12,7 @@ const API_BASE_URL = 'https://www.lokapal.xyz/api';
 const GRAPHQL_ENDPOINT = 'https://api.studio.thegraph.com/query/121796/plexus-archive-sepolia/v0.0.1';
 
 // Contract addresses on Base Mainnet
-const BOOK_TOKEN_CONTRACT = '0x4FEb9Fbc359400d477761cD67d80cF0ce43dd84F'; // TODO: Update with deployed mainnet address
+const BOOK_TOKEN_CONTRACT = '0x4FEb9Fbc359400d477761cD67d80cF0ce43dd84F';
 const BOOK_PRICE_ETH = '0.002'; // 0.002 ETH per book
 
 // IPFS Configuration
@@ -116,13 +116,15 @@ export default function FMAOReader() {
   const [plexusLoading, setPlexusLoading] = useState(false);
   const [showMintDialog, setShowMintDialog] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [showErrorDialog, setShowErrorDialog] = useState(false);
+  const [mintError, setMintError] = useState<string | null>(null);
   const { address } = useAccount();
   const [mintingBookId, setMintingBookId] = useState<string | null>(null);
   const [lastMintedBookId, setLastMintedBookId] = useState<string | null>(null);
 
-  // Wagmi hooks
-  const { data: hash, sendTransaction, isPending } = useSendTransaction();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
+  // Wagmi hooks - #5: Added error handling
+  const { data: hash, sendTransaction, isPending, error: sendError } = useSendTransaction();
+  const { isLoading: isConfirming, isSuccess, isError: isConfirmError } = useWaitForTransactionReceipt({ hash });
 
   useEffect(() => {
     fetchBooks();
@@ -133,8 +135,6 @@ export default function FMAOReader() {
     try {
       setLoading(true);
       setError(null);
-      // For now, we'll manually define the books
-      // In the future, you can create an API endpoint to list all books
       const bookList: BookDefinition[] = [
         {
           id: 'book-0',
@@ -167,41 +167,76 @@ export default function FMAOReader() {
     }
   };
 
+  // #6: Added timeout with AbortController
   const fetchChapters = async (bookId: string) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`${API_BASE_URL}/books/${bookId}?lang=${language}`);
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      
+      const response = await fetch(`${API_BASE_URL}/books/${bookId}?lang=${language}`, {
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
       if (!response.ok) throw new Error('Failed to load chapters');
       const data = await response.json();
       setChapters(data.chapters);
       setSelectedBook(bookId);
       setViewMode('chapters');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      if (err instanceof Error) {
+        if (err.name === 'AbortError') {
+          setError('Request timed out. Please try again.');
+        } else {
+          setError(err.message);
+        }
+      } else {
+        setError('An error occurred');
+      }
     } finally {
       setLoading(false);
     }
   };
 
+  // #6: Added timeout with AbortController
   const fetchChapterContent = async (chapterId: string) => {
     if (!selectedBook) return;
     
     try {
       setContentLoading(true);
       setError(null);
-      const response = await fetch(`${API_BASE_URL}/books/${selectedBook}/chapters/${chapterId}?lang=${language}`);
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      
+      const response = await fetch(`${API_BASE_URL}/books/${selectedBook}/chapters/${chapterId}?lang=${language}`, {
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
       if (!response.ok) throw new Error('Failed to load chapter');
       const data = await response.json();
       setSelectedChapter(data);
       setViewMode('content');
 
-      // ADD THIS LINE HERE
       window.scrollTo(0, 0);
 
       markAsRead(`${language}-${selectedBook}-${chapterId}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load content');
+      if (err instanceof Error) {
+        if (err.name === 'AbortError') {
+          setError('Request timed out. Please try again.');
+        } else {
+          setError('Failed to load content');
+        }
+      } else {
+        setError('Failed to load content');
+      }
     } finally {
       setContentLoading(false);
     }
@@ -234,7 +269,7 @@ export default function FMAOReader() {
   const resetProgress = () => {
     setReadChapters(new Set());
     localStorage.removeItem('fmao_read_chapters');
-    window.scrollTo({ top: 0, behavior: 'smooth' }); // Reset scroll position
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const toggleLanguage = () => {
@@ -248,27 +283,30 @@ export default function FMAOReader() {
     setViewMode('books');
     setSelectedChapter(null);
     setSelectedBook(null);
-    window.scrollTo(0, 0); // Reset scroll position
+    window.scrollTo(0, 0);
   };
 
   const goToChapters = () => {
     setViewMode('chapters');
     setSelectedChapter(null);
-    window.scrollTo(0, 0); // Reset scroll position
+    window.scrollTo(0, 0);
   };
 
+  // #6 & #7: Added timeout and GraphQL error checking
   const fetchPlexusEntry = async (title: string) => {
     try {
       setPlexusLoading(true);
-      // Remove everything before and including the colon, plus any whitespace after
-      // This handles "Shard X:", "Chapter X:", "Interlude X:", etc.
       const cleanTitle = title.replace(/^[^:]+:\s*/, '');
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
       
       const response = await fetch(GRAPHQL_ENDPOINT, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        signal: controller.signal,
         body: JSON.stringify({
           query: `
             query GetChapterByTitle($title: String!) {
@@ -305,7 +343,15 @@ export default function FMAOReader() {
         })
       });
 
+      clearTimeout(timeoutId);
       const result = await response.json();
+      
+      // #7 - Check for GraphQL errors
+      if (result.errors) {
+        console.error('GraphQL errors:', result.errors);
+        return;
+      }
+      
       if (result.data?.entries?.[0]) {
         setPlexusEntry(result.data.entries[0]);
         setShowPlexusDialog(true);
@@ -313,7 +359,11 @@ export default function FMAOReader() {
         console.error('No Plexus entry found for:', cleanTitle);
       }
     } catch (err) {
-      console.error('Failed to fetch Plexus entry:', err);
+      if (err instanceof Error && err.name === 'AbortError') {
+        console.error('Plexus query timed out');
+      } else {
+        console.error('Failed to fetch Plexus entry:', err);
+      }
     } finally {
       setPlexusLoading(false);
     }
@@ -334,8 +384,7 @@ export default function FMAOReader() {
     return parseInt(bookId.replace('book-', ''));
   };
 
-  // Hook to check if the user owns the currently selected book
-const { data: balance, refetch: refetchBalance, isLoading: isBalanceLoading } = useReadContract({
+  const { data: balance, refetch: refetchBalance, isLoading: isBalanceLoading } = useReadContract({
     address: BOOK_TOKEN_CONTRACT as `0x${string}`,
     abi: BOOK_TOKEN_ABI,
     functionName: 'balanceOf',
@@ -347,31 +396,45 @@ const { data: balance, refetch: refetchBalance, isLoading: isBalanceLoading } = 
 
   const isActuallyOwned = balance ? Number(balance) > 0 : false;
 
-  // Handle successful mint. Updated Success Effect
+  // Handle successful mint
   useEffect(() => {
-    // We check for mintingBookId to ensure this effect ONLY fires once per transaction
     if (isSuccess && hash && mintingBookId) {
-      refetchBalance(); // Update on-chain truth
-      // saveMintedBook(mintingBookId); // Update local cache
+      refetchBalance();
       
-      setLastMintedBookId(mintingBookId); // Lock the ID for the Success Dialog
+      setLastMintedBookId(mintingBookId);
       setShowMintDialog(false);
       setShowSuccessDialog(true);
       
-      // IMPORTANT: Reset mintingBookId here. 
-      // This "disarms" the effect so it won't fire again even if isSuccess remains true.
-      setMintingBookId(null); 
+      setMintingBookId(null);
     }
   }, [isSuccess, hash, mintingBookId, refetchBalance]);
+
+  // #5 - Handle transaction errors
+  useEffect(() => {
+    if ((isConfirmError || sendError) && mintingBookId) {
+      let errorMessage = 'Please try again later.';
+      
+      if (sendError?.message.includes('insufficient funds')) {
+        errorMessage = 'Insufficient ETH. Please add more ETH to your wallet.';
+      } else if (sendError?.message.includes('rejected')) {
+        errorMessage = 'Transaction rejected. Please try again.';
+      }
+      
+      setMintError(errorMessage);
+      setShowMintDialog(false);
+      setShowErrorDialog(true);
+      setMintingBookId(null);
+    }
+  }, [isConfirmError, sendError, mintingBookId]);
 
   const mintBookToken = async () => {
     if (!selectedBook) return;
 
     try {
+      setMintError(null);
       const bookIdNumber = getBookIdNumber(selectedBook);
       
-      // Set this BEFORE sending the transaction
-      setMintingBookId(selectedBook); 
+      setMintingBookId(selectedBook);
 
       const data = encodeFunctionData({
         abi: MINT_BOOK_ABI,
@@ -388,10 +451,20 @@ const { data: balance, refetch: refetchBalance, isLoading: isBalanceLoading } = 
 
     } catch (err) {
       console.error('Minting failed:', err);
-      setMintingBookId(null); // Reset on immediate failure
-      alert('Minting failed. Please try again.');
+      setMintingBookId(null);
+      setMintError('Failed to initiate transaction. Please try again.');
+      setShowMintDialog(false);
+      setShowErrorDialog(true);
     }
   };
+
+  // #12 - useMemo optimization
+  const currentBookReadCount = useMemo(() => 
+    selectedBook 
+      ? Array.from(readChapters).filter(id => id.startsWith(`${language}-${selectedBook}-`)).length 
+      : 0,
+    [selectedBook, readChapters, language]
+  );
 
   if (loading && viewMode === 'books') {
     return (
@@ -419,10 +492,6 @@ const { data: balance, refetch: refetchBalance, isLoading: isBalanceLoading } = 
       </div>
     );
   }
-
-  const currentBookReadCount = selectedBook 
-    ? Array.from(readChapters).filter(id => id.startsWith(`${language}-${selectedBook}-`)).length 
-    : 0;
 
   return (
     <div style={{ minHeight: '100vh', background: '#000', color: '#f1f5f9', position: 'relative' }}>
@@ -455,14 +524,13 @@ const { data: balance, refetch: refetchBalance, isLoading: isBalanceLoading } = 
         <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '20px 24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ flex: 1 }}>
-              {/* Title Row */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
                 <Terminal style={{ width: '24px', height: '24px', color: '#22d3ee' }} />
                 <h1 
                   style={{ 
                     fontSize: '24px', 
                     fontFamily: 'monospace', 
-                    fontWeight: 'bold', 
+                    fontWeight: 'bold',
                     background: 'linear-gradient(to right, #22d3ee, #60a5fa)', 
                     WebkitBackgroundClip: 'text', 
                     WebkitTextFillColor: 'transparent', 
@@ -662,6 +730,34 @@ const { data: balance, refetch: refetchBalance, isLoading: isBalanceLoading } = 
                 >
                   MINT<br />BOOK_TOKEN<br />(0.002 ETH)
                 </button>
+              )}
+
+              {/* #9 - Loading spinner for balance check */}
+              {selectedBook && isBalanceLoading && (
+                <div style={{
+                  padding: '12px 24px',
+                  background: 'rgba(34, 211, 238, 0.05)',
+                  border: '2px solid rgba(34, 211, 238, 0.2)',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <Terminal style={{ 
+                    width: '16px', 
+                    height: '16px', 
+                    color: '#22d3ee',
+                    animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+                  }} />
+                  <span style={{
+                    color: '#22d3ee',
+                    fontFamily: 'monospace',
+                    fontSize: '14px',
+                    fontWeight: 'bold'
+                  }}>
+                    CHECKING...
+                  </span>
+                </div>
               )}
 
               {/* 2. OWNED BADGE: Only show if the blockchain confirms ownership */}
@@ -1422,6 +1518,83 @@ const { data: balance, refetch: refetchBalance, isLoading: isBalanceLoading } = 
               }}
             >
               CONTINUE_READING
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Error Dialog */}
+      {showErrorDialog && mintError && (
+        <div 
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.85)',
+            backdropFilter: 'blur(8px)',
+            zIndex: 50,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px'
+          }}
+          onClick={() => setShowErrorDialog(false)}
+        >
+          <div 
+            style={{
+              background: '#0a1628',
+              border: '2px solid rgba(239, 68, 68, 0.4)',
+              borderRadius: '12px',
+              maxWidth: '400px',
+              width: '100%',
+              padding: '32px',
+              textAlign: 'center'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <X style={{ width: '64px', height: '64px', color: '#ef4444', margin: '0 auto 24px' }} />
+            
+            <h3 style={{
+              fontSize: '24px',
+              fontFamily: 'monospace',
+              fontWeight: 'bold',
+              color: '#ef4444',
+              marginBottom: '16px'
+            }}>
+              TRANSACTION_FAILED
+            </h3>
+            
+            <p style={{
+              fontSize: '16px',
+              color: '#cbd5e1',
+              lineHeight: 1.6,
+              marginBottom: '24px',
+              fontFamily: 'system-ui, -apple-system, sans-serif'
+            }}>
+              {mintError}
+            </p>
+
+            <button
+              onClick={() => setShowErrorDialog(false)}
+              style={{
+                width: '100%',
+                padding: '12px',
+                background: 'rgba(239, 68, 68, 0.2)',
+                border: '1px solid rgba(239, 68, 68, 0.4)',
+                color: '#ef4444',
+                borderRadius: '8px',
+                fontFamily: 'monospace',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                cursor: 'pointer'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.3)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)';
+              }}
+            >
+              CLOSE
             </button>
           </div>
         </div>
