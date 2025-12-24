@@ -97,6 +97,96 @@ interface PlexusEntry {
   transactionHash: string;
 }
 
+const TRANSLATIONS = {
+  en: {
+    toggle_lang: "LEER EN ESPAÑOL",
+    mint_btn: "MINT_BOOK",
+    owned: "TOKEN_OWNED",
+    back: "BACK",
+    back_to: "RETURN_TO",
+    archive: "ARCHIVE",
+    index: "_INDEX",
+    purge: "PURGE_LOGS",
+    accessed: "ACCESSED",
+    plexus_archive: "Plexus Archive",
+    shard_tag: "Shard Tag",
+    echo_source: "Echo Source",
+    earth: "Earth Time",
+    lanka: "Lanka Time",
+    archivist: "Archivist Log",
+    close: "Close",
+    retry: "RETRY",
+    chapters_read: "CHAPTERS_READ: ",
+    init: "ACCESSING_ARCHIVE...",
+    archive_index: "ARCHIVE_INDEX",
+    select: "SELECT A VOLUME TO ACCESS ITS CHAPTERS",    
+    support: "Support the author • Unlimited supply",
+    chapter_archived: "CHAPTER_ARCHIVED",
+    mint_title: "Mint Book Token",
+    checking: "CHECKING...",
+    loading: "LOADING......",    
+    loading_chapters: "LOADING_CHAPTERS......",  
+    decrypting: "DECRYPTING_CHAPTERS......",  
+    reveal: "REVEAL_LOGS",
+    err_mint: 'Minting failed: ',    
+    err_generic: 'Please try again later.',
+    err_funds: 'Insufficient ETH. Please add more ETH to your wallet.',
+    err_rejected: 'Transaction rejected. Please try again.',
+    err_init: 'Failed to initiate transaction. Please try again.',
+    execute_mint: "EXECUTE_MINT",  // USADOSSSSSSSSSS
+    waiting_wallet: "WAITING_FOR_WALLET...",
+    confirming: "CONFIRMING_ON_CHAIN...",
+    success_title: "SUCCESS_CONFIRMED",
+    success_msg: (book: string) => `You now own ${book}. Thank you for your support.`,
+    return_reading: "RETURN_TO_READING",
+    error_title: "TRANSACTION_FAILED",
+  },
+  es: {
+    toggle_lang: "READ IN ENGLISH",
+    mint_btn: "MINTEAR_LIBRO",
+    owned: "TOKEN_ADQUIRIDO",
+    back: "VOLVER",
+    back_to: "VOLVER_AL",
+    archive: "ARCHIVO",
+    index: "_INDICE",
+    purge: "LIMPIAR_REGISTROS",
+    accessed: "ACCEDIDO",
+    plexus_archive: "Archivo del Plexo",
+    shard_tag: "Etiqueta de esquirla",
+    echo_source: "Fuente del eco",
+    earth: "Tiempo terrestre",
+    lanka: "Tiempo de Lanka",
+    archivist: "Registro del Archivista",
+    close: "Cerrar",
+    retry: "REINTENTAR",
+    chapters_read: "CAPITULOS_LEIDOS: ",
+    init: "ACCEDIENDO_ARCHIVO...",
+    archive_index: "INDICE_DEL_ARCHIVO",
+    select: "SELECCIONE UN VOLUMEN PARA ACCEDER A SUS CAPITULOS",    
+    support: "Respalde al autor • Suministro ilimitado",
+    chapter_archived: "CAPITULO_ARCHIVADO",
+    mint_title: "Mintear Token de Libro",
+    checking: "CHEQUEANDO...",
+    loading: "CARGANDO......",    
+    loading_chapters: "CARGANDO_CAPITULOS......",    
+    decrypting: "DECIFRANDO_CAPITULOS......",  
+    reveal: "REVELAR_REGISTROS",    
+    err_mint: 'Minteo fallido: ',
+    err_generic: 'Por favor, inténtalo de nuevo más tarde.',
+    err_funds: 'ETH insuficiente. Por favor, añade más ETH a tu billetera.',
+    err_rejected: 'Transacción rechazada. Por favor, inténtalo de nuevo.',
+    err_init: 'No se inició la transacción. Por favor, inténtalo de nuevo.',
+    execute_mint: "EJECUTAR_MINT",
+    waiting_wallet: "ESPERANDO_BILLETERA...",
+    confirming: "CONFIRMANDO_EN_CADENA...",
+    success_title: "ÉXITO_CONFIRMADO",
+    success_msg: (book: string) => `Ahora posees el ${book.replace('Book', 'Libro')}. Gracias por tu apoyo.`,
+    return_reading: "SEGUIR_LEYENDO",
+    error_title: "TRANSACCIÓN_FALLIDA",
+  }
+};
+
+
 type Language = 'en' | 'es';
 type ViewMode = 'books' | 'chapters' | 'content';
 
@@ -412,12 +502,12 @@ export default function FMAOReader() {
   // #5 - Handle transaction errors
   useEffect(() => {
     if ((isConfirmError || sendError) && mintingBookId) {
-      let errorMessage = 'Please try again later.';
+      let errorMessage = TRANSLATIONS[language].err_generic;
       
       if (sendError?.message.includes('insufficient funds')) {
-        errorMessage = 'Insufficient ETH. Please add more ETH to your wallet.';
+        errorMessage = TRANSLATIONS[language].err_funds;
       } else if (sendError?.message.includes('rejected')) {
-        errorMessage = 'Transaction rejected. Please try again.';
+        errorMessage = TRANSLATIONS[language].err_rejected;
       }
       
       setMintError(errorMessage);
@@ -425,7 +515,7 @@ export default function FMAOReader() {
       setShowErrorDialog(true);
       setMintingBookId(null);
     }
-  }, [isConfirmError, sendError, mintingBookId]);
+  }, [isConfirmError, sendError, mintingBookId, language]);
 
   const mintBookToken = async () => {
     if (!selectedBook) return;
@@ -450,9 +540,9 @@ export default function FMAOReader() {
       });
 
     } catch (err) {
-      console.error('Minting failed:', err);
+      console.error(TRANSLATIONS[language].err_mint, err);
       setMintingBookId(null);
-      setMintError('Failed to initiate transaction. Please try again.');
+      setMintError(TRANSLATIONS[language].err_init);
       setShowMintDialog(false);
       setShowErrorDialog(true);
     }
@@ -471,7 +561,7 @@ export default function FMAOReader() {
       <div style={{ minHeight: '100vh', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center' }}>
           <Terminal style={{ width: '48px', height: '48px', color: '#22d3ee', margin: '0 auto 16px', animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }} />
-          <p style={{ color: '#22d3ee', fontFamily: 'monospace', fontSize: '14px' }}>INITIALIZING PLEXUS ARCHIVE...</p>
+          <p style={{ color: '#22d3ee', fontFamily: 'monospace', fontSize: '14px' }}>{TRANSLATIONS[language].init}</p>
         </div>
       </div>
     );
@@ -486,7 +576,7 @@ export default function FMAOReader() {
             onClick={fetchBooks}
             style={{ padding: '8px 24px', background: '#dc2626', color: 'white', borderRadius: '4px', fontFamily: 'monospace', border: 'none', cursor: 'pointer' }}
           >
-            RETRY
+            {TRANSLATIONS[language].retry}
           </button>
         </div>
       </div>
@@ -548,31 +638,30 @@ export default function FMAOReader() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '12px', fontFamily: 'monospace' }}>
                 {viewMode === 'chapters' && (
                   <span style={{ color: 'rgba(34, 211, 238, 0.7)' }}>
-                    CHAPTERS_READ: <span style={{ color: '#4ade80' }}>{currentBookReadCount}/{chapters.length}</span>
+                    {TRANSLATIONS[language].chapters_read}<span style={{ color: '#4ade80' }}>{currentBookReadCount}/{chapters.length}</span>
                   </span>
                 )}
                 
-                {/* Separator and Language Toggle
-                <span style={{ color: '#475569' }}>|</span> */}
+                {/* Separator and Language Toggle */}
                 <button
                   onClick={toggleLanguage}
                   style={{
-                    padding: '8px 16px',
-                    background: '#0f172a',
-                    border: '1px solid rgba(34, 211, 238, 0.3)',
-                    borderRadius: '4px',
-                    fontFamily: 'monospace',
-                    fontSize: '14px',
-                    cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px'
+                    gap: '8px',
+                    padding: '8px 16px',
+                    background: 'rgba(34, 211, 238, 0.1)',
+                    border: '1px solid rgba(34, 211, 238, 0.3)',
+                    color: '#22d3ee',
+                    borderRadius: '4px',
+                    fontFamily: 'monospace',
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                    margin: '10px 0'
                   }}
                 >
-                  <Globe style={{ width: '16px', height: '16px', color: '#22d3ee' }} />
-                  <span style={{ color: '#67e8f9', fontWeight: 'bold' }}>
-                    {language.toUpperCase()}
-                  </span>
+                  <Globe style={{ width: '14px', height: '14px' }} />
+                  {TRANSLATIONS[language].toggle_lang}
                 </button>
               </div>
             </div>
@@ -595,10 +684,10 @@ export default function FMAOReader() {
                 WebkitTextFillColor: 'transparent',
                 marginBottom: '16px'
               }}>
-                ARCHIVE_INDEX
+                {TRANSLATIONS[language].archive_index}
               </h2>
               <p style={{ color: '#94a3b8', fontSize: '14px', fontFamily: 'monospace' }}>
-                SELECT A VOLUME TO ACCESS ITS CHAPTERS
+                {TRANSLATIONS[language].select}
               </p>
             </div>
 
@@ -621,14 +710,6 @@ export default function FMAOReader() {
                   minHeight: '120px', // Ensures consistent height
                   display: 'flex',
                   alignItems: 'center'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = 'rgba(34, 211, 238, 0.6)';
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = 'rgba(34, 211, 238, 0.2)';
-                  e.currentTarget.style.transform = 'translateY(0)';
                 }}
               >
                 {/* Background Watermark Icon */}
@@ -697,7 +778,7 @@ export default function FMAOReader() {
                 }}
               >
                 <X style={{ width: '14px', height: '14px' }} />
-                RETURN<br />TO_ARCHIVE
+                {TRANSLATIONS[language].back_to}<br />{TRANSLATIONS[language].archive}
               </button>
 
               {/* 1. Only show the Mint button if the chain says they DON'T own it */}
@@ -719,16 +800,8 @@ export default function FMAOReader() {
                     gap: '8px',
                     transition: 'all 0.2s'
                   }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(34, 211, 238, 0.6)';
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(34, 211, 238, 0.4)';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                  }}
                 >
-                  MINT<br />BOOK_TOKEN<br />(0.002 ETH)
+                  {TRANSLATIONS[language].mint_btn}<br />(0.002 ETH)
                 </button>
               )}
 
@@ -755,7 +828,7 @@ export default function FMAOReader() {
                     fontSize: '14px',
                     fontWeight: 'bold'
                   }}>
-                    CHECKING...
+                    {TRANSLATIONS[language].checking}
                   </span>
                 </div>
               )}
@@ -776,7 +849,7 @@ export default function FMAOReader() {
                   gap: '8px'
                 }}>
                   <CheckCircle style={{ width: '16px', height: '16px' }} />
-                  TOKEN_OWNED
+                  {TRANSLATIONS[language].owned}
                 </div>
               )}
             </div>
@@ -784,7 +857,7 @@ export default function FMAOReader() {
             {loading ? (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 0' }}>
                 <Terminal style={{ width: '48px', height: '48px', color: '#22d3ee', marginBottom: '16px', animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }} />
-                <p style={{ color: '#22d3ee', fontFamily: 'monospace', fontSize: '14px' }}>LOADING SHARDS...</p>
+                <p style={{ color: '#22d3ee', fontFamily: 'monospace', fontSize: '14px' }}>{TRANSLATIONS[language].loading_chapters}</p>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -804,12 +877,6 @@ export default function FMAOReader() {
                         cursor: 'pointer',
                         transition: 'all 0.2s',
                         position: 'relative'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.borderColor = 'rgba(34, 211, 238, 0.5)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.borderColor = 'rgba(30, 41, 59, 0.5)';
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
@@ -836,7 +903,7 @@ export default function FMAOReader() {
                                 borderRadius: '4px',
                                 background: 'rgba(74, 222, 128, 0.05)'
                               }}>
-                                ACCESSED
+                                {TRANSLATIONS[language].accessed}
                               </span>
                             )}
                           </div>
@@ -877,7 +944,7 @@ export default function FMAOReader() {
                   }}
                 >
                   <Terminal style={{ width: '12px', height: '12px' }} />
-                  PURGE_ACCESS_LOGS
+                  {TRANSLATIONS[language].purge}
                 </button>
               </div>
             )}
@@ -890,7 +957,7 @@ export default function FMAOReader() {
             {contentLoading ? (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 0' }}>
                 <Terminal style={{ width: '48px', height: '48px', color: '#22d3ee', marginBottom: '16px', animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }} />
-                <p style={{ color: '#22d3ee', fontFamily: 'monospace', fontSize: '14px' }}>DECRYPTING SHARD...</p>
+                <p style={{ color: '#22d3ee', fontFamily: 'monospace', fontSize: '14px' }}>{TRANSLATIONS[language].decrypting}</p>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
@@ -912,7 +979,7 @@ export default function FMAOReader() {
                   }}
                 >
                   <X style={{ width: '14px', height: '14px' }} />
-                  RETURN_TO_INDEX
+                  {TRANSLATIONS[language].back_to}{TRANSLATIONS[language].index}
                 </button>
 
                 <div style={{
@@ -998,21 +1065,9 @@ export default function FMAOReader() {
                         opacity: plexusLoading ? 0.5 : 1,
                         transition: 'all 0.2s'
                       }}
-                      onMouseEnter={(e) => {
-                        if (!plexusLoading) {
-                          e.currentTarget.style.background = 'rgba(34, 211, 238, 0.2)';
-                          e.currentTarget.style.borderColor = 'rgba(34, 211, 238, 0.5)';
-                          e.currentTarget.style.transform = 'translateY(-2px)';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'rgba(34, 211, 238, 0.1)';
-                        e.currentTarget.style.borderColor = 'rgba(34, 211, 238, 0.3)';
-                        e.currentTarget.style.transform = 'translateY(0)';
-                      }}
                     >
                       <Database style={{ width: '16px', height: '16px' }} />
-                      {plexusLoading ? 'LOADING...' : 'REVEAL_LOGS'}
+                      {plexusLoading ? TRANSLATIONS[language].loading : TRANSLATIONS[language].reveal}
                     </button>
                   </div>
                 </div>
@@ -1036,22 +1091,14 @@ export default function FMAOReader() {
                       fontSize: '14px',
                       cursor: 'pointer'
                     }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = 'rgba(34, 211, 238, 0.5)';
-                      e.currentTarget.style.color = '#22d3ee';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = '#334155';
-                      e.currentTarget.style.color = '#cbd5e1';
-                    }}
                   >
-                    ← BACK
+                    ← {TRANSLATIONS[language].back}
                   </button>
                   
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <CheckCircle style={{ width: '20px', height: '20px', color: '#4ade80' }} />
                     <span style={{ fontSize: '14px', fontFamily: 'monospace', color: '#4ade80' }}>
-                      CHAPTER_ARCHIVED
+                      {TRANSLATIONS[language].chapter_archived}
                     </span>
                   </div>
                 </div>
@@ -1113,7 +1160,7 @@ export default function FMAOReader() {
                   WebkitTextFillColor: 'transparent',
                   margin: 0
                 }}>
-                  Plexus Archive
+                  {TRANSLATIONS[language].plexus_archive}
                 </h3>
               </div>
               <button
@@ -1125,8 +1172,6 @@ export default function FMAOReader() {
                   cursor: 'pointer',
                   padding: '4px'
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.color = '#22d3ee'}
-                onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}
               >
                 <X style={{ width: '24px', height: '24px' }} />
               </button>
@@ -1155,7 +1200,7 @@ export default function FMAOReader() {
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em'
                   }}>
-                    Shard Tag
+                    {TRANSLATIONS[language].shard_tag}
                   </div>
                   <div style={{
                     fontSize: '15px',
@@ -1182,7 +1227,7 @@ export default function FMAOReader() {
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em'
                   }}>
-                    Echo Source
+                    {TRANSLATIONS[language].echo_source}
                   </div>
                   <div style={{
                     fontSize: '15px',
@@ -1209,7 +1254,7 @@ export default function FMAOReader() {
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em'
                   }}>
-                    Earth Time
+                    {TRANSLATIONS[language].earth}
                   </div>
                   <div style={{
                     fontSize: '15px',
@@ -1236,7 +1281,7 @@ export default function FMAOReader() {
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em'
                   }}>
-                    Lanka Time
+                    {TRANSLATIONS[language].lanka}
                   </div>
                   <div style={{
                     fontSize: '15px',
@@ -1264,7 +1309,7 @@ export default function FMAOReader() {
                   textTransform: 'uppercase',
                   letterSpacing: '0.05em'
                 }}>
-                  Archivist Log
+                  {TRANSLATIONS[language].archivist}
                 </div>
                 <div style={{
                   fontSize: '14px',
@@ -1290,16 +1335,8 @@ export default function FMAOReader() {
                     fontSize: '14px',
                     cursor: 'pointer'
                   }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(34, 211, 238, 0.2)';
-                    e.currentTarget.style.borderColor = 'rgba(34, 211, 238, 0.5)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(34, 211, 238, 0.1)';
-                    e.currentTarget.style.borderColor = 'rgba(34, 211, 238, 0.3)';
-                  }}
                 >
-                  Close
+                  {TRANSLATIONS[language].close}
                 </button>
               </div>
             </div>
@@ -1352,7 +1389,7 @@ export default function FMAOReader() {
                 WebkitTextFillColor: 'transparent',
                 margin: 0
               }}>
-                Mint Book Token
+                {TRANSLATIONS[language].mint_title}
               </h3>
               {!isPending && !isConfirming && (
                 <button
@@ -1364,8 +1401,6 @@ export default function FMAOReader() {
                     cursor: 'pointer',
                     padding: '4px'
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.color = '#22d3ee'}
-                  onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}
                 >
                   <X style={{ width: '24px', height: '24px' }} />
                 </button>
@@ -1409,7 +1444,7 @@ export default function FMAOReader() {
                   0.002 ETH
                 </div>
                 <div style={{ fontSize: '12px', color: '#64748b', marginTop: '8px', fontFamily: 'monospace' }}>
-                  Support the author • Unlimited supply
+                  {TRANSLATIONS[language].support}
                 </div>
               </div>
 
@@ -1430,16 +1465,12 @@ export default function FMAOReader() {
                   cursor: (isPending || isConfirming) ? 'not-allowed' : 'pointer',
                   opacity: (isPending || isConfirming) ? 0.6 : 1
                 }}
-                onMouseEnter={(e) => {
-                  if (!isPending && !isConfirming) {
-                    e.currentTarget.style.borderColor = 'rgba(34, 211, 238, 0.6)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = 'rgba(34, 211, 238, 0.4)';
-                }}
               >
-                {isPending ? 'CONFIRM IN WALLET...' : isConfirming ? 'CONFIRMING...' : 'CONFIRM MINT'}
+                {isPending 
+                  ? TRANSLATIONS[language].waiting_wallet 
+                  : isConfirming 
+                    ? TRANSLATIONS[language].confirming 
+                    : TRANSLATIONS[language].execute_mint}
               </button>
             </div>
           </div>
@@ -1483,7 +1514,7 @@ export default function FMAOReader() {
               color: '#4ade80',
               marginBottom: '16px'
             }}>
-              SUCCESS_CONFIRMED
+              {TRANSLATIONS[language].success_title}
             </h3>
             
             <p style={{
@@ -1493,7 +1524,9 @@ export default function FMAOReader() {
               marginBottom: '24px',
               fontFamily: 'system-ui, -apple-system, sans-serif'
             }}>
-              You now own {lastMintedBookId.replace('book-', 'Book ')}.<br/>Thank you for your support!
+              {TRANSLATIONS[language].success_msg(
+                lastMintedBookId?.replace('book-', language === 'es' ? 'Libro ' : 'Book ') || ''
+              )}
             </p>
 
             <button
@@ -1510,14 +1543,8 @@ export default function FMAOReader() {
                 fontWeight: 'bold',
                 cursor: 'pointer'
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(74, 222, 128, 0.3)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(74, 222, 128, 0.2)';
-              }}
             >
-              CONTINUE_READING
+              {TRANSLATIONS[language].return_reading}
             </button>
           </div>
         </div>
@@ -1560,7 +1587,7 @@ export default function FMAOReader() {
               color: '#ef4444',
               marginBottom: '16px'
             }}>
-              TRANSACTION_FAILED
+              {TRANSLATIONS[language].error_title}
             </h3>
             
             <p style={{
@@ -1587,14 +1614,8 @@ export default function FMAOReader() {
                 fontWeight: 'bold',
                 cursor: 'pointer'
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.3)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)';
-              }}
             >
-              CLOSE
+              {TRANSLATIONS[language].close}
             </button>
           </div>
         </div>
