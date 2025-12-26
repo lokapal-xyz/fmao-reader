@@ -6,6 +6,7 @@ import { useAccount, useReadContract, useSendTransaction, useWaitForTransactionR
 import { encodeFunctionData, parseEther } from 'viem';
 import { base } from 'viem/chains';
 import Image from 'next/image';
+import { useViewProfile } from '@coinbase/onchainkit/minikit';
 
 // Configuration
 const API_BASE_URL = 'https://www.lokapal.xyz/api';
@@ -140,6 +141,8 @@ const TRANSLATIONS = {
     success_msg: (book: string) => `You now own ${book}. Thank you for your support.`,
     return_reading: "RETURN TO READING",
     error_title: "TRANSACTION FAILED",
+    footer: "From Many, as One. A web serial by lokapal.eth",
+    follow_author: "FOLLOW THE AUTHOR",
   },
   es: {
     toggle_lang: "READ IN ENGLISH",
@@ -183,6 +186,8 @@ const TRANSLATIONS = {
     success_msg: (book: string) => `Ahora posees el ${book.replace('Book', 'Libro')}. Gracias por tu apoyo.`,
     return_reading: "SEGUIR LEYENDO",
     error_title: "TRANSACCIÓN FALLIDA",
+    footer: "From Many, as One. Un serial web de lokapal.eth",
+    follow_author: "SEGUIR AL AUTOR",
   }
 };
 
@@ -209,6 +214,7 @@ export default function FMAOReader() {
   const [showErrorDialog, setShowErrorDialog] = useState(false);
   const [mintError, setMintError] = useState<string | null>(null);
   const { address } = useAccount();
+  const viewProfile = useViewProfile();  
   const [mintingBookId, setMintingBookId] = useState<string | null>(null);
   const [lastMintedBookId, setLastMintedBookId] = useState<string | null>(null);
 
@@ -1123,6 +1129,61 @@ export default function FMAOReader() {
             )}
           </>
         )}
+        <footer style={{
+          marginTop: '32px', // Reduced from 64px to bring it closer
+          padding: '32px 20px 48px', // Balanced padding
+          textAlign: 'center',
+          borderTop: '1px solid rgba(34, 211, 238, 0.1)',
+        }}>
+          {/* The Legend */}
+          <p style={{
+            fontFamily: 'monospace',
+            fontSize: '14px', // Increased from 12px
+            letterSpacing: '0.05em',
+            color: '#22d3ee',
+            textTransform: 'uppercase',
+            marginBottom: '16px',
+            opacity: 0.8 // Increased from 0.7 for better visibility
+          }}>
+            {TRANSLATIONS[language].footer}
+          </p>
+
+          {/* The Follow Button */}
+          <button 
+            onClick={() => viewProfile(431835)}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: '12px 24px', // Slightly larger hit area for mobile
+              background: 'rgba(133, 93, 205, 0.2)', 
+              border: '1px solid rgba(133, 93, 205, 0.5)',
+              borderRadius: '12px', // Slightly more "app-like" corner
+              color: '#c4b5fd', // Lighter purple for better contrast
+              cursor: 'pointer',
+              fontFamily: 'monospace',
+              fontSize: '13px', // Increased from 11px
+              fontWeight: 'bold',
+              transition: 'all 0.2s',
+              boxShadow: '0 0 15px rgba(133, 93, 205, 0.1)' // Very subtle glow
+            }}
+          >
+          <svg 
+            width="16" 
+            height="16" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="2.5" 
+            strokeLinecap="round" 
+            strokeLinejoin="round"
+          >
+            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+          </svg>
+            {TRANSLATIONS[language].follow_author}
+          </button>
+        </footer>
       </div>
 
       {/* Plexus Archive Dialog */}
