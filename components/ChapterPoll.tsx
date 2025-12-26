@@ -78,7 +78,7 @@ export default function ChapterPoll({
   language,
   isTokenOwned,
   userAddress,
-  apiBaseUrl = 'http://localhost:3000/api'
+  apiBaseUrl = 'https://www.lokapal.xyz/api'
 }: ChapterPollProps) {
   const [poll, setPoll] = useState<Poll | null>(null);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
@@ -129,42 +129,53 @@ export default function ChapterPoll({
     }
   };
 
-  const submitVote = async () => {
-    if (!poll || !selectedOption || !userAddress) return;
+const submitVote = async () => {
+  if (!poll || !selectedOption || !userAddress) return;
 
-    try {
-      setSubmitting(true);
-      setError(null);
+  try {
+    setSubmitting(true);
+    setError(null);
 
-      const response = await fetch(`${apiBaseUrl}/polls/${poll.id}/vote`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          optionId: selectedOption,
-          walletAddress: userAddress,
-        }),
-      });
+    console.log('Submitting vote:', {
+      pollId: poll.id,
+      optionId: selectedOption,
+      walletAddress: userAddress,
+    });
 
-      const data = await response.json();
+    const response = await fetch(`${apiBaseUrl}/polls/${poll.id}/vote`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        optionId: selectedOption,
+        walletAddress: userAddress,
+      }),
+    });
 
-      if (!response.ok) {
-        throw new Error(data.error || t.poll_vote_error);
-      }
+    const data = await response.json();
+    
+    console.log('Vote response:', {
+      status: response.status,
+      data: data
+    });
 
-      // Update state with results
-      setHasVoted(true);
-      setUserVote(data.userVote);
-      setResults(data.results);
-      setTotalVotes(data.totalVotes);
-    } catch (err) {
-      console.error('Failed to submit vote:', err);
-      setError(err instanceof Error ? err.message : t.poll_vote_error);
-    } finally {
-      setSubmitting(false);
+    if (!response.ok) {
+      throw new Error(data.error || t.poll_vote_error);
     }
-  };
+
+    // Update state with results
+    setHasVoted(true);
+    setUserVote(data.userVote);
+    setResults(data.results);
+    setTotalVotes(data.totalVotes);
+  } catch (err) {
+    console.error('Failed to submit vote:', err);
+    setError(err instanceof Error ? err.message : t.poll_vote_error);
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   // Don't render anything if there's no poll
   if (!loading && !poll) {
