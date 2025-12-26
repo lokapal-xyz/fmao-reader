@@ -7,6 +7,7 @@ import { encodeFunctionData, parseEther } from 'viem';
 import { base } from 'viem/chains';
 import Image from 'next/image';
 import { useViewProfile } from '@coinbase/onchainkit/minikit';
+import ChapterPoll from '@/components/ChapterPoll';
 
 // Configuration
 const API_BASE_URL = 'https://www.lokapal.xyz/api';
@@ -143,6 +144,19 @@ const TRANSLATIONS = {
     error_title: "TRANSACTION FAILED",
     footer: "From Many, as One. A web serial by lokapal.eth",
     follow_author: "FOLLOW THE AUTHOR",
+    poll_header: "READER SIGNAL DETECTED",
+    poll_vote_btn: "SUBMIT VOTE",
+    poll_requires_token: "Book Token required to vote",
+    poll_voted: "SIGNAL TRANSMITTED",
+    poll_your_choice: "Your choice:",
+    poll_results: "AGGREGATE SIGNALS:",
+    poll_total: "Total votes:",
+    poll_loading: "LOADING POLL......",
+    poll_submitting: "TRANSMITTING......",
+    poll_error: "Failed to load poll",
+    poll_vote_error: "Failed to submit vote",
+    poll_retry: "RETRY",
+    poll_no_wallet: "Connect wallet to vote",
   },
   es: {
     toggle_lang: "READ IN ENGLISH",
@@ -188,6 +202,19 @@ const TRANSLATIONS = {
     error_title: "TRANSACCIÓN FALLIDA",
     footer: "From Many, as One. Un serial web de lokapal.eth",
     follow_author: "SEGUIR AL AUTOR",
+    poll_header: "SEÑAL DE LECTOR DETECTADA",
+    poll_vote_btn: "ENVIAR VOTO",
+    poll_requires_token: "Token de Libro requerido para votar",
+    poll_voted: "SEÑAL TRANSMITIDA",
+    poll_your_choice: "Tu elección:",
+    poll_results: "SEÑALES AGREGADAS:",
+    poll_total: "Votos totales:",
+    poll_loading: "CARGANDO ENCUESTA......",
+    poll_submitting: "TRANSMITIENDO......",
+    poll_error: "Error al cargar encuesta",
+    poll_vote_error: "Error al enviar voto",
+    poll_retry: "REINTENTAR",
+    poll_no_wallet: "Conecta billetera para votar",
   }
 };
 
@@ -1091,6 +1118,17 @@ export default function FMAOReader() {
                       {plexusLoading ? TRANSLATIONS[language].loading : TRANSLATIONS[language].reveal}
                     </button>
                   </div>
+
+                  {/* ADD THE POLL COMPONENT HERE */}
+                  {selectedChapter && selectedBook && (
+                    <ChapterPoll 
+                      bookId={selectedBook}
+                      chapterId={selectedChapter.chapterId}
+                      language={language}
+                      isTokenOwned={isActuallyOwned}
+                      userAddress={address}
+                    />
+                  )}
                 </div>
 
                 <div style={{
