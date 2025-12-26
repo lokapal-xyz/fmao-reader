@@ -78,7 +78,7 @@ export default function ChapterPoll({
   language,
   isTokenOwned,
   userAddress,
-  apiBaseUrl = 'https://www.lokapal.xyz/api'
+  apiBaseUrl = 'http://localhost:3000/api'
 }: ChapterPollProps) {
   const [poll, setPoll] = useState<Poll | null>(null);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);

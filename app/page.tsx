@@ -718,7 +718,7 @@ export default function FMAOReader() {
       </div>
 
       {/* Main Content */}
-      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '48px 24px', position: 'relative' }}>
+      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '48px 20px', position: 'relative' }}>
         {/* Books View */}
         {viewMode === 'books' && (
           <div>
@@ -1076,7 +1076,7 @@ export default function FMAOReader() {
                   border: '1px solid rgba(30, 41, 59, 0.5)',
                   background: 'rgba(2, 6, 23, 0.3)',
                   borderRadius: '8px',
-                  padding: '32px'
+                  padding: '16px'
                 }}>
                   <style dangerouslySetInnerHTML={{ __html: `
                     .content-area p { margin-bottom: 24px; line-height: 1.8; color: #cbd5e1; }
