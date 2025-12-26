@@ -1150,7 +1150,7 @@ export default function FMAOReader() {
 
           {/* The Follow Button */}
           <button 
-            onClick={() => viewProfile(431835)}
+            onClick={() => viewProfile(1394789)}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
