@@ -92,7 +92,7 @@ interface PlexusEntry {
   nftId: string;
   contentHash: string;
   permawebLink: string;
-  license: string;
+  canonMetadata: string;
   deprecated: boolean;
   blockNumber: string;
   blockTimestamp: string;
@@ -454,7 +454,7 @@ export default function FMAOReader() {
                 nftId
                 contentHash
                 permawebLink
-                license
+                canonMetadata
                 deprecated
                 blockNumber
                 blockTimestamp
