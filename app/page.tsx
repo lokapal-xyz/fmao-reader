@@ -11,7 +11,7 @@ import ChapterPoll from '@/components/ChapterPoll';
 
 // Configuration
 const API_BASE_URL = 'https://www.lokapal.xyz/api';
-const GRAPHQL_ENDPOINT = 'https://api.studio.thegraph.com/query/121796/plexus-archive-sepolia/v0.0.1';
+const GRAPHQL_ENDPOINT = 'https://api.studio.thegraph.com/query/121796/ledger-sepolia/v0.0.1';
 
 // Contract addresses on Base Mainnet
 const BOOK_TOKEN_CONTRACT = '0x4FEb9Fbc359400d477761cD67d80cF0ce43dd84F';
