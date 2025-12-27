@@ -135,7 +135,7 @@ const TRANSLATIONS = {
     err_funds: 'Insufficient ETH. Please add more ETH to your wallet.',
     err_rejected: 'Transaction rejected. Please try again.',
     err_init: 'Failed to initiate transaction. Please try again.',
-    execute_mint: "EXECUTE MINT",  // USADOSSSSSSSSSS
+    execute_mint: "EXECUTE MINT",
     waiting_wallet: "WAITING FOR WALLET...",
     confirming: "CONFIRMING ON CHAIN...",
     success_title: "SUCCESS CONFIRMED",

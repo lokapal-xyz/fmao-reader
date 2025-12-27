@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Lock, CheckCircle, BarChart3, Users } from 'lucide-react';
 
 interface PollOption {
@@ -78,7 +78,7 @@ export default function ChapterPoll({
   language,
   isTokenOwned,
   userAddress,
-  apiBaseUrl = 'https://www.lokapal.xyz/api'
+  apiBaseUrl = 'http://localhost:3000/api'
 }: ChapterPollProps) {
   const [poll, setPoll] = useState<Poll | null>(null);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
@@ -90,13 +90,9 @@ export default function ChapterPoll({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const t = TRANSLATIONS[language];
+  const t = useMemo(() => TRANSLATIONS[language], [language]);
 
-  useEffect(() => {
-    fetchPoll();
-  }, [bookId, chapterId, userAddress]);
-
-  const fetchPoll = async () => {
+  const fetchPoll = useCallback(async () =>{
     try {
       setLoading(true);
       setError(null);
@@ -112,22 +108,22 @@ export default function ChapterPoll({
         setPoll(data.poll);
         setHasVoted(data.hasVoted);
         setUserVote(data.userVote);
-        
         if (data.results) {
           setResults(data.results);
           setTotalVotes(data.totalVotes);
         }
-      } else {
-        // No poll for this chapter
-        setPoll(null);
       }
     } catch (err) {
-      console.error('Failed to fetch poll:', err);
+      console.error('Failed to submit vote:', err);
       setError(t.poll_error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [bookId, chapterId, userAddress, apiBaseUrl, t.poll_error]);
+
+  useEffect(() => {
+    fetchPoll();
+  }, [fetchPoll]);
 
   const submitVote = async () => {
     if (!poll || !selectedOption || !userAddress) return;
