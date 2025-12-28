@@ -1081,7 +1081,7 @@ export default function FMAOReader() {
                   <style dangerouslySetInnerHTML={{ __html: `
                     .content-area p { margin-bottom: 24px; line-height: 1.8; color: #cbd5e1; }
                     .content-area em { font-style: italic; color: #4ade80; }
-                    .content-area strong { font-weight: bold; color: #60a5fa; }
+                    .content-area strong { font-weight: bold; color: #06b6d4; }
                     .content-area hr { border: 0; border-top: 1px solid #334155; margin: 32px 0; }
                     .content-area h1 { color: #22d3ee; font-family: monospace; margin-bottom: 24px; font-size: 24px; }
                     .content-area h2 { color: #22d3ee; font-family: monospace; margin-bottom: 16px; font-size: 20px; }
