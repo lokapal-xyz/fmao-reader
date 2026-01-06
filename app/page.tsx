@@ -8,6 +8,7 @@ import { base } from 'viem/chains';
 import Image from 'next/image';
 import { useViewProfile } from '@coinbase/onchainkit/minikit';
 import ChapterPoll from '@/components/ChapterPoll';
+import { useMiniKit } from '@coinbase/onchainkit/minikit';
 
 // Configuration
 const API_BASE_URL = 'https://www.lokapal.xyz/api';
@@ -242,12 +243,21 @@ export default function FMAOReader() {
   const [mintError, setMintError] = useState<string | null>(null);
   const { address } = useAccount();
   const viewProfile = useViewProfile();  
+  // Mini app Ready
+  const { setMiniAppReady, isMiniAppReady } = useMiniKit();
+
+  useEffect(() => {
+    if (!isMiniAppReady) setMiniAppReady();
+  }, [isMiniAppReady, setMiniAppReady]);
+
   const [mintingBookId, setMintingBookId] = useState<string | null>(null);
   const [lastMintedBookId, setLastMintedBookId] = useState<string | null>(null);
 
   // Wagmi hooks - #5: Added error handling
   const { data: hash, sendTransaction, isPending, error: sendError } = useSendTransaction();
   const { isLoading: isConfirming, isSuccess, isError: isConfirmError } = useWaitForTransactionReceipt({ hash });
+
+
 
   useEffect(() => {
     fetchBooks();
